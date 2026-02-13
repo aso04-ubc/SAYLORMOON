@@ -26,6 +26,22 @@ module sha256(
         return (rotate_right(in, 17) ^ rotate_right(in, 19) ^ (in >> 10));
     endfunction
 
+    function automatic logic [31:0] choose(input logic [31:0] select, input logic [31:0] x, input logic [31:0] y);
+        return (x && select) ^ (y && ~select);
+    endfunction
+
+    function automatic logic [31:0] majority (input logic [31:0] j, input logic [31:0] k, input logic [31:0] l);
+        return (j && k) ^ (j && l) ^ (k && l);
+    endfunction
+
+    function automatic logic [31:0] S0 (input logic [31:0] in);
+        return rotate_right(in, 2) ^ rotate_right(in, 13) ^ rotate_right(in, 22);
+    endfunction
+
+    function automatic logic [31:0] S1 (input logic [31:0] in);
+        return rotate_right(in, 6) ^ rotate_right(in, 11) ^ rotate_right(in ,25);
+    endfunction
+
     // always_comb begin
     //     for (int b = 0; b < 16; b++) begin 
     //         W[b] = block[511-b*32:(b+1)*16];
