@@ -54,15 +54,15 @@ module sha256(
     logic [31:0] H0, H1, H2, H3, H4, H5, H6, H7;
     logic [31:0] K [63:0];
 
-    assign K = '{
-    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    localparam logic [31:0] K [0:63] = '{
+    32'h428a2f98, 32'h71374491, 32'hb5c0fbcf, 32'he9b5dba5, 32'h3956c25b, 32'h59f111f1, 32'h923f82a4, 32'hab1c5ed5,
+    32'hd807aa98, 32'h12835b01, 32'h243185be, 32'h550c7dc3, 32'h72be5d74, 32'h80deb1fe, 32'h9bdc06a7, 32'hc19bf174,
+    32'he49b69c1, 32'hefbe4786, 32'h0fc19dc6, 32'h240ca1cc, 32'h2de92c6f, 32'h4a7484aa, 32'h5cb0a9dc, 32'h76f988da,
+    32'h983e5152, 32'ha831c66d, 32'hb00327c8, 32'hbf597fc7, 32'hc6e00bf3, 32'hd5a79147, 32'h06ca6351, 32'h14292967,
+    32'h27b70a85, 32'h2e1b2138, 32'h4d2c6dfc, 32'h53380d13, 32'h650a7354, 32'h766a0abb, 32'h81c2c92e, 32'h92722c85,
+    32'ha2bfe8a1, 32'ha81a664b, 32'hc24b8b70, 32'hc76c51a3, 32'hd192e819, 32'hd6990624, 32'hf40e3585, 32'h106aa070,
+    32'h19a4c116, 32'h1e376c08, 32'h2748774c, 32'h34b0bcb5, 32'h391c0cb3, 32'h4ed8aa4a, 32'h5b9cca4f, 32'h682e6ff3,
+    32'h748f82ee, 32'h78a5636f, 32'h84c87814, 32'h8cc70208, 32'h90befffa, 32'ha4506ceb, 32'hbef9a3f7, 32'hc67178f2
     };
 
     // computer temp1 & temp2 in combinational logic to avoid pipeline hazard //
@@ -91,12 +91,14 @@ module sha256(
             f <= 32'h0x9b05688c;
             g <= 32'h0x1f83d9ab;
             h <= 32'h0x5be0cd19;
-        end
-        else if (start) begin
+
+        end else if (start) begin
+
             for (int z = 0; z < 16; z++) begin
                 W[z] <= block[511-z*32 -: 32];
             end
             timer <= 16;
+
         end else if (timer >= 16 && timer < 64) begin
 
             h <= g;
@@ -110,7 +112,9 @@ module sha256(
 
             W[timer] <= s1(W[timer-2]) + W[timer-7] + s0(W[timer-15]) + W[timer-16];
             timer <= timer + 1;
-        end else if (timer == 64) {
+
+        end else if (timer == 64) begin
+
             H0 <= H0 + a;
             H1 <= H1 + b;
             H2 <= H2 + c;
@@ -121,7 +125,8 @@ module sha256(
             H7 <= H7 + h;
 
             finish <= 1;
-        }
+        
+        end
     end
 
     assign digest = '{H0, H1, H2, H3, H4, H5, H6, H7};
