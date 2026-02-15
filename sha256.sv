@@ -119,6 +119,6 @@ module sha256(
         end
     end
 
-    assign digest = '{H0, H1, H2, H3, H4, H5, H6, H7};
+    assign digest = {H0, H1, H2, H3, H4, H5, H6, H7};
 
 endmodule
