@@ -36,23 +36,15 @@ module sha256(
         return rotate_right(in, 6) ^ rotate_right(in, 11) ^ rotate_right(in ,25);
     endfunction
 
-    // always_comb begin
-    //     for (int b = 0; b < 16; b++) begin 
-    //         W[b] = block[511-b*32:(b+1)*16];
-    //     end
-    //     for (int a = 16; a < 64; a++) begin
-    //         W[a] = s1(W[a-2]) + W[a-7] + s0(W[a-15]) + W[a-16];
-    //     end
-    // end
-
     
     logic [31:0] temp1;
     logic [31:0] temp2;
-    logic [31:0] W [63:0];
+    logic [31:0] W [0:63];
 
     logic [31:0] a, b, c, d, e, f, g, h;
     logic [31:0] H0, H1, H2, H3, H4, H5, H6, H7;
-    logic [31:0] K [63:0];
+    logic [31:0] w_update;
+    logic [6:0] timer;
 
     localparam logic [31:0] K [0:63] = '{
     32'h428a2f98, 32'h71374491, 32'hb5c0fbcf, 32'he9b5dba5, 32'h3956c25b, 32'h59f111f1, 32'h923f82a4, 32'hab1c5ed5,
@@ -65,41 +57,45 @@ module sha256(
     32'h748f82ee, 32'h78a5636f, 32'h84c87814, 32'h8cc70208, 32'h90befffa, 32'ha4506ceb, 32'hbef9a3f7, 32'hc67178f2
     };
 
-    // computer temp1 & temp2 in combinational logic to avoid pipeline hazard //
-    assign temp1 <= h + S1(e) + choose(e,f,g) + K[timer] + W[timer];
-    assign temp2 <= S0(a) + majority(a,b,c);
+    // anti pipeline hazard //
+    assign temp1 = h + S1(e) + choose(e,f,g) + K[timer] + w_update;
+    assign temp2 = S0(a) + majority(a,b,c);
 
-    logic [6:0] timer;
+    always_comb begin
+        if (timer < 16) begin
+            w_update = block[511 - timer * 32 -: 32];
+        end else begin
+            w_update = s1(W[timer-2]) + W[timer-7] + s0(W[timer-15]) + W[timer-16];
+        end
+    end
+    // anti pipeline hazard //
+
     always_ff @(posedge clock or negedge reset) begin
-        if (!reset) begin 
-            timer <= 0;
+        if (!reset) begin
 
-            H0 <= 32'h0x6a09e667;
-            H1 <= 32'h0xbb67ae85;
-            H2 <= 32'h0x3c6ef372;
-            H3 <= 32'h0xa54ff53a;
-            H4 <= 32'h0x510e527f;
-            H5 <= 32'h0x9b05688c;
-            H6 <= 32'h0x1f83d9ab;
-            H7 <= 32'h0x5be0cd19;
+            timer <= 7'd65;
+            finish <= 0;
 
-            a <= 32'h0x6a09e667;
-            b <= 32'h0xbb67ae85;
-            c <= 32'h0x3c6ef372;
-            d <= 32'h0xa54ff53a;
-            e <= 32'h0x510e527f;
-            f <= 32'h0x9b05688c;
-            g <= 32'h0x1f83d9ab;
-            h <= 32'h0x5be0cd19;
+            H0 <= 32'h6a09e667;
+            H1 <= 32'hbb67ae85;
+            H2 <= 32'h3c6ef372;
+            H3 <= 32'ha54ff53a;
+            H4 <= 32'h510e527f;
+            H5 <= 32'h9b05688c;
+            H6 <= 32'h1f83d9ab;
+            H7 <= 32'h5be0cd19;
 
-        end else if (start) begin
+        end else if (start && timer > 63) begin
 
-            for (int z = 0; z < 16; z++) begin
-                W[z] <= block[511-z*32 -: 32];
-            end
-            timer <= 16;
+            finish <= 0;
+            timer <= 7'd0;
 
-        end else if (timer >= 16 && timer < 64) begin
+            a <= H0; b <= H1; c <= H2; d <= H3;
+            e <= H4; f <= H5; g <= H6; h <= H7;
+
+        end else if (timer < 64) begin
+
+            W[timer] <= w_update;
 
             h <= g;
             g <= f;
@@ -110,21 +106,15 @@ module sha256(
             b <= a;
             a <= temp1 + temp2;
 
-            W[timer] <= s1(W[timer-2]) + W[timer-7] + s0(W[timer-15]) + W[timer-16];
             timer <= timer + 1;
 
         end else if (timer == 64) begin
 
-            H0 <= H0 + a;
-            H1 <= H1 + b;
-            H2 <= H2 + c;
-            H3 <= H3 + d;
-            H4 <= H4 + e;
-            H5 <= H5 + f;
-            H6 <= H6 + g;
-            H7 <= H7 + h;
+            H0 <= H0 + a; H1 <= H1 + b; H2 <= H2 + c; H3 <= H3 + d;
+            H4 <= H4 + e; H5 <= H5 + f; H6 <= H6 + g; H7 <= H7 + h;
 
             finish <= 1;
+            timer <= 7'd65;
         
         end
     end
