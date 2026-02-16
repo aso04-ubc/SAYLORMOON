@@ -56,6 +56,8 @@ module sha256(
     // 32'h19a4c116, 32'h1e376c08, 32'h2748774c, 32'h34b0bcb5, 32'h391c0cb3, 32'h4ed8aa4a, 32'h5b9cca4f, 32'h682e6ff3,
     // 32'h748f82ee, 32'h78a5636f, 32'h84c87814, 32'h8cc70208, 32'h90befffa, 32'ha4506ceb, 32'hbef9a3f7, 32'hc67178f2
     // };
+
+    // this initial block is for compatibility with iverilog, the above commented block should be used for synthesis //
     reg [31:0] K [0:63];
 
     initial begin
