@@ -85,7 +85,7 @@ module sha256(
     always_ff @(posedge clock or negedge reset) begin
         if (!reset) begin
 
-            timer <= 7'd0;
+            timer <= 7'd65;
             finish <= 0;
 
             H0 <= 32'h6a09e667;
