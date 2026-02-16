@@ -55,6 +55,12 @@ module tb_sha256;
             if (scan_result == 2) begin
                 
                 @(negedge clk);
+                reset = 0;
+                
+                @(negedge clk);
+                reset = 1;
+
+                @(negedge clk);
                 start = 1;
                 
                 @(negedge clk);
