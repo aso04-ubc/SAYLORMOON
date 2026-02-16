@@ -40,9 +40,9 @@ module tb_sha256;
         expected = 0;
 
         $display("Applying Reset...");
-        reset = 1; 
+        reset = 0;
         #20;
-        reset = 0; 
+        reset = 1; 
         #10;
 
         file = $fopen("examples.txt", "r");
