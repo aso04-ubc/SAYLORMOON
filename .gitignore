@@ -1,3 +1,7 @@
 /einstein-island/
 example.sv
 /.vscode/
+*.out
+*.vcd
+sim
+examples.txt
