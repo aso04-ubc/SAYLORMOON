@@ -5,3 +5,11 @@ example.sv
 *.vcd
 sim
 examples.txt
+/db/
+/greybox_tmp/
+/output_files/
+*_inst.v
+*.qip
+*.qpf
+*.qsf
+/incremental_db/
