@@ -3,10 +3,15 @@ module sha256(
     input logic reset,
     input logic start,
 
-    input logic [31:0] block_data_in,
+    input logic [31:0] from_block,
     output logic block_wren,
+    output logic [31:0] to_block,
+    output logic [4:0] block_address,
 
-
+    input logic [31:0] from_digest,
+    output logic digest_wren,
+    output logic [31:0] to_digest,
+    output logic [4:0] digest_address,
 
     output logic [255:0] digest,
     output logic finish
@@ -44,6 +49,8 @@ module sha256(
     //endregion ============================ Utility Functions ============================ endregion\\
     
     //region ================================ Variables ================================ region\\
+    logic [31:0] block [15:0];
+
     logic [31:0] temp1;
     logic [31:0] temp2;
     logic [31:0] W [0:63];
@@ -77,11 +84,45 @@ module sha256(
     K[48] = 32'h19a4c116; K[48+1] = 32'h1e376c08; K[48+2] = 32'h2748774c; K[48+3] = 32'h34b0bcb5; K[48+4] = 32'h391c0cb3; K[48+5] = 32'h4ed8aa4a; K[48+6] = 32'h5b9cca4f; K[48+7] = 32'h682e6ff3;
     K[56] = 32'h748f82ee; K[56+1] = 32'h78a5636f; K[56+2] = 32'h84c87814; K[56+3] = 32'h8cc70208; K[56+4] = 32'h90befffa; K[56+5] = 32'ha4506ceb; K[56+6] = 32'hbef9a3f7; K[56+7] = 32'hc67178f2;
     end
+
+    assign block_wren = 1'b0;
+    assign to_block = 'x; // we are not writing to block
     //endregion ================================ Variables ================================ endregion\\
 
-    //region ================================ anti pipeline hazard ================================ region\\
+    //region ============================== Memory Blocks ============================== region\\
+    block b (
+        .address ( block_address ),
+        .clock ( clock ),
+        .data ( to_block ),
+        .wren ( block_wren ),
+        .q ( from_block )
+    );
+
+    digest	digest_inst (
+        .address ( digest_address ),
+        .clock ( clock ),
+        .data ( to_digest ),
+        .wren ( digest_wren ),
+        .q ( from_digest )
+	);
+    //endregion =========================== Memory Blocks =========================== endregion\\
+
+    //region =========================== Anti Pipeline Hazard =========================== region\\
     assign temp1 = h + S1(e) + choose(e,f,g) + K[timer] + w_update;
     assign temp2 = S0(a) + majority(a,b,c);
+    //endregion ======================== Anti Pipeline Hazard ======================== endregion\\
+
+    //region =============================== Read The Block =============================== region\\
+    always_ff @(posedge clock or negedge reset) begin
+        if (!reset) begin
+            block_address <= 5'b0; // use the address as a counter
+        end else if (start && block_address > 15) begin
+            block_address <= block_address + 1;
+        end else if (block_address >= 16)
+    end
+    assign block[block_address] = from_block;
+    //endregion ============================ Read The Block ============================ endregion\\
+
 
     always_comb begin
         if (timer < 16) begin
@@ -90,7 +131,6 @@ module sha256(
             w_update = s1(W[timer-2]) + W[timer-7] + s0(W[timer-15]) + W[timer-16];
         end
     end
-    //endregion ================================ anti pipeline hazard ================================ endregion\\
 
     always_ff @(posedge clock or negedge reset) begin
         if (!reset) begin
